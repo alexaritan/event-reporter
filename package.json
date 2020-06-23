@@ -1,0 +1,14 @@
+{
+	"name": "event-reporter",
+	"version": "1.0.0",
+	"main": "app.ts",
+	"scripts": {
+		"build": "rm -rf ./build && tsc -p ."
+	},
+	"repository": "https://github.com/alexaritan/event-reporter.git",
+	"author": "Alex Aritan <cokethenwpepsi@gmail.com>",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/jquery": "^3.5.0"
+	}
+}
