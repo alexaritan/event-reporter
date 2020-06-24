@@ -1,10 +1,40 @@
 "use strict";
 $(document).ready(function () {
     $('#generateReportButton').click(function () {
+        //Parse tsv to json, exclude test events, and include only events in specified date range.
         var rawData = $('#data').val();
-        var data = parseTsv(rawData);
-        var filteredData = removeTestRows(data);
-        console.log(filteredData);
+        var start = $('#startDate').val();
+        var end = $('#endDate').val();
+        var data = getWithinDateRange(removeTestRows(parseTsv(rawData)), start, end);
+        //Get non-cancelled events count.
+        var nonCancelledEventsCount = data.filter(function (event) { return event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1; }).length;
+        //Get events cancelled due to covid count.
+        var cancelledDueToCovidCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
+            && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1); }).length;
+        //Get events cancelled not due to covid count.	
+        var cancelledNotDueToCovidCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
+            && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NOT_AFFECTED) > -1); }).length;
+        //Get non-cancelled events that switched from in-person to virtual count.
+        var inPersonToVirtualCount = data.filter(function (event) { return ((event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf('this event was in-person and is now virtual') > -1)
+            ||
+                (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf('is it now virtual?') > -1)); }).length;
+        //Get events created because of covid count.
+        var newCovidEvents = data.filter(function (event) { return event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1; });
+        var newCovidEventsCount = newCovidEvents.length;
+        //Get expected attendees to all new events.
+        var newEventExpectedAttendees = newCovidEvents
+            .map(function (event) { return +event.totalAttendeesExpected; })
+            .reduce(function (sum, attendees) { return sum + attendees; }, 0);
+        //Get rescheduled events count.
+        var rescheduledCount = data.filter(function (event) { return event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1; }).length;
+        //Print everything out.
+        console.log("NOT CANCELLED " + nonCancelledEventsCount);
+        console.log("CANCELLED DUE TO COVID " + cancelledDueToCovidCount);
+        console.log("CANCELLED NOT DUE TO COVID " + cancelledNotDueToCovidCount);
+        console.log("NON CANCELLED EVENTS THAT WEREN'T VIRTUAL BUT BECAME VIRTUAL " + inPersonToVirtualCount);
+        console.log("NEW EVENTS CREATED DUE TO COVID " + newCovidEventsCount);
+        console.log("EXPECTED ATTENDEES FOR NEW EVENTS " + newEventExpectedAttendees);
+        console.log("RESCHEDULED EVENTS " + rescheduledCount);
     });
 });
 //Convert tab separated string (where first row is headers) to js object.
@@ -66,4 +96,27 @@ var removeTestRows = function (data) {
         && event.eventTitle.toLowerCase().indexOf('template') === -1
         && event.eventTitle.toLowerCase().indexOf('concur') === -1
         && event.eventTitle.toLowerCase().indexOf('cvent') === -1); });
+};
+var getWithinDateRange = function (data, start, end) {
+    var startDate = (new Date(start)).valueOf();
+    var endDate = (new Date(end)).valueOf();
+    return data.filter(function (event) {
+        var eventStartDate = (new Date(event.startDate)).valueOf();
+        var eventEndDate = (new Date(event.endDate)).valueOf();
+        return eventStartDate > startDate && eventEndDate < endDate;
+    });
+};
+var constants = {
+    COLUMNS: {
+        AFFECTED_BY_COVID: {
+            CANCELLED: 'yes, this event was cancelled',
+            HYBRID_TO_VIRTUAL: 'this event was hybrid and is now virtual',
+            NEW_EVENT: 'yes, this is a new event created due to covid',
+            NOT_AFFECTED: 'no, this event was not affected',
+            RESCHEDULED: 'yes, this event was rescheduled'
+        },
+        REQUEST_STATUS: {
+            CANCELLED: 'cancelled'
+        }
+    }
 };
