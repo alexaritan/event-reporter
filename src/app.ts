@@ -2,62 +2,82 @@ $(document).ready(() => {
 	
 	//Button on click listener.
 	$('#generateReportButton').click(() => {
-		//Parse tsv to json, exclude test events, and include only events in specified date range.
-		const rawData = $('#data').val() as string;
-		const start = $('#startDate').val() as string;
-		const end = $('#endDate').val() as string;
-		const data = getWithinDateRange(removeTestRows(parseTsv(rawData)), start, end);
-		
-		//Get non-cancelled events count.
-		const nonCancelledEventsCount = data.filter(event => event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1).length;
-		
-		//Get events cancelled due to covid count.
-		const cancelledDueToCovidCount = data.filter(event => (
-			event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
-			&& event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1
-		)).length;
-
-		//Get events cancelled not due to covid count.	
-		const cancelledNotDueToCovidCount = data.filter(event => (
-			event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
-			&& event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NOT_AFFECTED) > -1
-		)).length;
-
-		//Get non-cancelled events that switched from in-person to virtual count.
-		const inPersonToVirtualCount = data.filter(event => (
-			(event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
-			||
-			(event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf('is it now virtual?') > -1)
-		)).length;
-
-		//Get events created because of covid count.
-		const newCovidEvents = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1);
-		const newCovidEventsCount = newCovidEvents.length;
-
-		//Get expected attendees to all new events.
-		const newEventExpectedAttendees = newCovidEvents
-			.map(event => +event.totalAttendeesExpected)
-			.reduce((sum, attendees) => sum + attendees, 0)
-
-		//Get rescheduled events count.
-		const rescheduledCount = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1).length;
-
-		//Put all data into a table.
-		const tableData = [
-			['Not cancelled', nonCancelledEventsCount],
-			['Cancelled due to COVID', cancelledDueToCovidCount],
-			['Cancelled <i>not</i> due to COVID', cancelledNotDueToCovidCount],
-			['Switched to virtual due to COVID', inPersonToVirtualCount],
-			['New events due to COVID', newCovidEventsCount],
-			['Expected attendees for new events', newEventExpectedAttendees],
-			['Rescheduled events', rescheduledCount]
-		];
+		//Empty the table to prepare for the new results (or clear in case there's an error).
 		$('#results').empty();
-		for(const td of tableData) {
-			$('#results').append(`<tr>
-				<td style='border: 1px solid #aaaaaa;'>${td[0]}</td>
-				<td style='border: 1px solid #aaaaaa;'>${td[1]}</td>
-			</tr>`);
+
+		try {
+			//Parse tsv to json, exclude test events, and include only events in specified date range.
+			const rawData = $('#data').val() as string;
+			const start = $('#startDate').val() as string;
+			const end = $('#endDate').val() as string;
+			const data = getWithinDateRange(removeTestRows(parseTsv(rawData)), start, end);
+
+			//Get non-cancelled events count.
+			const nonCancelledEventsCount = data.filter(event => event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1).length;
+
+			//Get events cancelled due to covid count.
+			const cancelledDueToCovidCount = data.filter(event => (
+				event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
+				&& event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1
+			)).length;
+
+			//Get events cancelled not due to covid count.	
+			const cancelledNotDueToCovidCount = data.filter(event => (
+				event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
+				&& event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NOT_AFFECTED) > -1
+			)).length;
+
+			//Get non-cancelled events that switched from in-person to virtual count.
+			const inPersonToVirtualCount = data.filter(event => (
+				(event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
+				||
+				(event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf('is it now virtual?') > -1)
+			)).length;
+
+			//Get events created because of covid count.
+			const newCovidEvents = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1);
+			const newCovidEventsCount = newCovidEvents.length;
+
+			//Get expected attendees to all new events.
+			const newEventExpectedAttendees = newCovidEvents
+				.map(event => {
+					//Parse the values of attendees expected, which might not be (but usually is) a simple number in string form.
+					let numAttendees;
+					//Check for numer in string form, or a string that begins with a number, like '500+'.
+					if(!isNaN(parseInt(event.totalAttendeesExpected.trim()))) numAttendees = parseInt(event.totalAttendeesExpected.trim());
+					//Check for ranges and take the first value, like '10 - 20' should take 10.
+					else if(event.totalAttendeesExpected.indexOf('-') > -1) {
+						const estimates = event.totalAttendeesExpected.split('-');
+						if(!isNaN(parseInt(estimates[0].trim()))) numAttendees = parseInt(estimates[0].trim());
+						else throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+					}
+					else throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+					return numAttendees
+				})
+				.reduce((sum, attendees) => sum + attendees, 0)
+
+			//Get rescheduled events count.
+			const rescheduledCount = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1).length;
+
+			//Put all data into a table.
+			const tableData = [
+				['Not cancelled', nonCancelledEventsCount],
+				['Cancelled due to COVID', cancelledDueToCovidCount],
+				['Cancelled <i>not</i> due to COVID', cancelledNotDueToCovidCount],
+				['Switched to virtual due to COVID', inPersonToVirtualCount],
+				['New events due to COVID', newCovidEventsCount],
+				['Expected attendees for new events', newEventExpectedAttendees],
+				['Rescheduled events', rescheduledCount]
+			];
+			for(const td of tableData) {
+				$('#results').append(`<tr>
+					<td style='border: 1px solid #aaaaaa;'>${td[0]}</td>
+					<td style='border: 1px solid #aaaaaa;'>${td[1]}</td>
+				</tr>`);
+			}
+		}
+		catch(e) {
+			console.log(e.message);
 		}
 	});
 
@@ -151,6 +171,9 @@ const constants = {
 		REQUEST_STATUS: {
 			CANCELLED: 'cancelled'
 		}
+	},
+	ERRORS: {
+		INVALID_ATTENDEES_VALUE(eventTitle, totalAttendeesExpected) {return `Could not parse number of attendees for event titled ${eventTitle}. Attendees value was set as ${totalAttendeesExpected}.`}
 	}
 };
 
