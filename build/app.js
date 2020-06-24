@@ -1,5 +1,6 @@
 "use strict";
 $(document).ready(function () {
+    //Button on click listener.
     $('#generateReportButton').click(function () {
         //Parse tsv to json, exclude test events, and include only events in specified date range.
         var rawData = $('#data').val();
@@ -27,14 +28,21 @@ $(document).ready(function () {
             .reduce(function (sum, attendees) { return sum + attendees; }, 0);
         //Get rescheduled events count.
         var rescheduledCount = data.filter(function (event) { return event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1; }).length;
-        //Print everything out.
-        console.log("NOT CANCELLED " + nonCancelledEventsCount);
-        console.log("CANCELLED DUE TO COVID " + cancelledDueToCovidCount);
-        console.log("CANCELLED NOT DUE TO COVID " + cancelledNotDueToCovidCount);
-        console.log("NON CANCELLED EVENTS THAT WEREN'T VIRTUAL BUT BECAME VIRTUAL " + inPersonToVirtualCount);
-        console.log("NEW EVENTS CREATED DUE TO COVID " + newCovidEventsCount);
-        console.log("EXPECTED ATTENDEES FOR NEW EVENTS " + newEventExpectedAttendees);
-        console.log("RESCHEDULED EVENTS " + rescheduledCount);
+        //Put all data into a table.
+        var tableData = [
+            ['Not cancelled', nonCancelledEventsCount],
+            ['Cancelled due to COVID', cancelledDueToCovidCount],
+            ['Cancelled <i>not</i> due to COVID', cancelledNotDueToCovidCount],
+            ['Switched to virtual due to COVID', inPersonToVirtualCount],
+            ['New events due to COVID', newCovidEventsCount],
+            ['Expected attendees for new events', newEventExpectedAttendees],
+            ['Rescheduled events', rescheduledCount]
+        ];
+        $('#results').empty();
+        for (var _i = 0, tableData_1 = tableData; _i < tableData_1.length; _i++) {
+            var td = tableData_1[_i];
+            $('#results').append("<tr>\n\t\t\t\t<td style='border: 1px solid #aaaaaa;'>" + td[0] + "</td>\n\t\t\t\t<td style='border: 1px solid #aaaaaa;'>" + td[1] + "</td>\n\t\t\t</tr>");
+        }
     });
 });
 //Convert tab separated string (where first row is headers) to js object.

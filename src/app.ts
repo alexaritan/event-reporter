@@ -1,5 +1,6 @@
 $(document).ready(() => {
 	
+	//Button on click listener.
 	$('#generateReportButton').click(() => {
 		//Parse tsv to json, exclude test events, and include only events in specified date range.
 		const rawData = $('#data').val() as string;
@@ -41,14 +42,23 @@ $(document).ready(() => {
 		//Get rescheduled events count.
 		const rescheduledCount = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1).length;
 
-		//Print everything out.
-		console.log(`NOT CANCELLED ${nonCancelledEventsCount}`);
-		console.log(`CANCELLED DUE TO COVID ${cancelledDueToCovidCount}`);
-		console.log(`CANCELLED NOT DUE TO COVID ${cancelledNotDueToCovidCount}`);
-		console.log(`NON CANCELLED EVENTS THAT WEREN'T VIRTUAL BUT BECAME VIRTUAL ${inPersonToVirtualCount}`);
-		console.log(`NEW EVENTS CREATED DUE TO COVID ${newCovidEventsCount}`);
-		console.log(`EXPECTED ATTENDEES FOR NEW EVENTS ${newEventExpectedAttendees}`);
-		console.log(`RESCHEDULED EVENTS ${rescheduledCount}`);
+		//Put all data into a table.
+		const tableData = [
+			['Not cancelled', nonCancelledEventsCount],
+			['Cancelled due to COVID', cancelledDueToCovidCount],
+			['Cancelled <i>not</i> due to COVID', cancelledNotDueToCovidCount],
+			['Switched to virtual due to COVID', inPersonToVirtualCount],
+			['New events due to COVID', newCovidEventsCount],
+			['Expected attendees for new events', newEventExpectedAttendees],
+			['Rescheduled events', rescheduledCount]
+		];
+		$('#results').empty();
+		for(const td of tableData) {
+			$('#results').append(`<tr>
+				<td style='border: 1px solid #aaaaaa;'>${td[0]}</td>
+				<td style='border: 1px solid #aaaaaa;'>${td[1]}</td>
+			</tr>`);
+		}
 	});
 
 });

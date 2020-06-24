@@ -8,7 +8,9 @@
 	</head>
 	<body>
 		<div id='container'>
-			<textarea id='data'></textarea>
+			<h2>Event Report Generator</h2>
+			<textarea id='data' placeholder='Paste tab separated content here'></textarea>
+			<br />
 			<br />
 			<label for='startDate'>Start date</label>
 			<input type='date' id='startDate' name='startDate' />
@@ -16,9 +18,53 @@
 			<label for='endDate'>End date</label>
 			<input type='date' id='endDate' name='endDate' />
 			<br />
+			<br />
 			<button id='generateReportButton'>
-				Get shit done
+				GET SHIT DONE
 			</button>
+			<br />
+			<br />
+			<hr />
+			<br />
+			<h2>Results</h2>
+			<table id='results'>
+			</table>
+			<br />
+			<br />
+			<br />
+			<br />
+			<br />
+			<br />
 		</div>
 	</body>
+
+	<style>
+		body {
+			text-align: center;
+			background-color: #eeeeee;
+			font-family: arial;
+		}
+
+		#data {
+			width: 1000px;
+			height: 400px;
+		}
+
+		#generateReportButton {
+			width: 110px;
+			height: 40px;
+			background-color: white;
+			border: 1px solid #cccccc;
+		}
+
+		#generateReportButton:hover {
+			cursor: pointer;
+			background-color: #eeeeee;
+		}
+
+		#results {
+			margin: auto;
+			width: 400px;
+		}
+	</style>
 </html>
