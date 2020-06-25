@@ -47,6 +47,7 @@ $(document).ready(function () {
                 }
                 else
                     throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+                console.log("TITLE: " + event.eventTitle + ", NUM ATTENDEES: " + numAttendees);
                 return numAttendees;
             })
                 .reduce(function (sum, attendees) { return sum + attendees; }, 0);

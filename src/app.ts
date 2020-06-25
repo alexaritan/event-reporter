@@ -56,6 +56,7 @@ $(document).ready(() => {
 						else throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
 					}
 					else throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+					console.log(`TITLE: ${event.eventTitle}, NUM ATTENDEES: ${numAttendees}`)
 					return numAttendees
 				})
 				.reduce((sum, attendees) => sum + attendees, 0)
