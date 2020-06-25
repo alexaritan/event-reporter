@@ -9,15 +9,19 @@ $(document).ready(function () {
             var rawData = $('#data').val();
             var start = $('#startDate').val();
             var end = $('#endDate').val();
-            var data = getWithinDateRange(removeTestRows(parseTsv(rawData)), start, end);
+            var parsedData = parseTsv(rawData);
+            console.log("ALL ROWS: " + parsedData.length);
+            var filteredData = removeTestRows(parsedData);
+            console.log("FILTERED ROWS: " + filteredData.length);
+            var data = getWithinDateRange(filteredData, start, end);
+            console.log("WITHIN DATE RANGE ROWS: " + data.length);
             //Get non-cancelled events count.
             var nonCancelledEventsCount = data.filter(function (event) { return event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1; }).length;
             //Get events cancelled due to covid count.
             var cancelledDueToCovidCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
                 && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1); }).length;
             //Get events cancelled not due to covid count.	
-            var cancelledNotDueToCovidCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
-                && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NOT_AFFECTED) > -1); }).length;
+            var cancelledTotalCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1); }).length;
             //Get non-cancelled events that switched from in-person to virtual count.
             var inPersonToVirtualCount = data.filter(function (event) { return ((event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
                 ||
@@ -52,7 +56,7 @@ $(document).ready(function () {
             var tableData = [
                 ['Not cancelled', nonCancelledEventsCount],
                 ['Cancelled due to COVID', cancelledDueToCovidCount],
-                ['Cancelled <i>not</i> due to COVID', cancelledNotDueToCovidCount],
+                ['Total cancelled', cancelledTotalCount + 2 + " (including 2 cancelled events with blank status)"],
                 ['Switched to virtual due to COVID', inPersonToVirtualCount],
                 ['New events due to COVID', newCovidEventsCount],
                 ['Expected attendees for new events', newEventExpectedAttendees],
@@ -64,7 +68,7 @@ $(document).ready(function () {
             }
         }
         catch (e) {
-            console.log(e.message);
+            console.log(e.toString());
         }
     });
 });
@@ -120,21 +124,25 @@ var parseTsv = function (rawData) {
     }
     return data;
 };
-//TODO this could cause problems with events that are not test events that contain any of these terms!
 var removeTestRows = function (data) {
-    return data.filter(function (event) { return (event.eventTitle.toLowerCase().indexOf('test') === -1
-        && event.eventTitle.toLowerCase().indexOf('budget') === -1
-        && event.eventTitle.toLowerCase().indexOf('template') === -1
-        && event.eventTitle.toLowerCase().indexOf('concur') === -1
-        && event.eventTitle.toLowerCase().indexOf('cvent') === -1); });
+    return data.filter(function (event) {
+        var _a;
+        return (event.eventTitle.toLowerCase().indexOf('test') !== 0
+            && event.eventTitle.toLowerCase().indexOf('budget') !== 0
+            && event.eventTitle.toLowerCase().indexOf('template') !== 0
+            && event.eventTitle.toLowerCase().indexOf('concur') !== 0
+            && event.eventTitle.toLowerCase().indexOf('cvent') !== 0
+            && event.eventTitle.toLowerCase().indexOf('trustee meeting - ') !== 0
+            && event.eventTitle.toLowerCase().indexOf('board meeting - fmr llc board of directors') !== 0
+            && (!event.plannerName || ((_a = event === null || event === void 0 ? void 0 : event.plannerName) === null || _a === void 0 ? void 0 : _a.toLowerCase().indexOf('flynn-wright, denise')) === -1));
+    });
 };
 var getWithinDateRange = function (data, start, end) {
     var startDate = (new Date(start)).valueOf();
     var endDate = (new Date(end)).valueOf();
     return data.filter(function (event) {
         var eventStartDate = (new Date(event.startDate)).valueOf();
-        var eventEndDate = (new Date(event.endDate)).valueOf();
-        return eventStartDate > startDate && eventEndDate < endDate;
+        return eventStartDate >= startDate && eventStartDate <= endDate;
     });
 };
 var constants = {

@@ -10,7 +10,12 @@ $(document).ready(() => {
 			const rawData = $('#data').val() as string;
 			const start = $('#startDate').val() as string;
 			const end = $('#endDate').val() as string;
-			const data = getWithinDateRange(removeTestRows(parseTsv(rawData)), start, end);
+			const parsedData = parseTsv(rawData);
+			console.log(`ALL ROWS: ${parsedData.length}`);
+			const filteredData = removeTestRows(parsedData);
+			console.log(`FILTERED ROWS: ${filteredData.length}`);
+			const data = getWithinDateRange(filteredData, start, end);
+			console.log(`WITHIN DATE RANGE ROWS: ${data.length}`);
 
 			//Get non-cancelled events count.
 			const nonCancelledEventsCount = data.filter(event => event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1).length;
@@ -22,9 +27,8 @@ $(document).ready(() => {
 			)).length;
 
 			//Get events cancelled not due to covid count.	
-			const cancelledNotDueToCovidCount = data.filter(event => (
+			const cancelledTotalCount = data.filter(event => (
 				event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
-				&& event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NOT_AFFECTED) > -1
 			)).length;
 
 			//Get non-cancelled events that switched from in-person to virtual count.
@@ -63,7 +67,7 @@ $(document).ready(() => {
 			const tableData = [
 				['Not cancelled', nonCancelledEventsCount],
 				['Cancelled due to COVID', cancelledDueToCovidCount],
-				['Cancelled <i>not</i> due to COVID', cancelledNotDueToCovidCount],
+				['Total cancelled', `${cancelledTotalCount + 2} (including 2 cancelled events with blank status)`],
 				['Switched to virtual due to COVID', inPersonToVirtualCount],
 				['New events due to COVID', newCovidEventsCount],
 				['Expected attendees for new events', newEventExpectedAttendees],
@@ -77,7 +81,7 @@ $(document).ready(() => {
 			}
 		}
 		catch(e) {
-			console.log(e.message);
+			console.log(e.toString());
 		}
 	});
 
@@ -137,14 +141,16 @@ const parseTsv = (rawData: string): FidEvent[] => {
 	return data;
 };
 
-//TODO this could cause problems with events that are not test events that contain any of these terms!
 const removeTestRows = (data: FidEvent[]): FidEvent[] => {
 	return data.filter((event) => (
-		event.eventTitle.toLowerCase().indexOf('test') === -1
-		&& event.eventTitle.toLowerCase().indexOf('budget') === -1
-		&& event.eventTitle.toLowerCase().indexOf('template') === -1
-		&& event.eventTitle.toLowerCase().indexOf('concur') === -1
-		&& event.eventTitle.toLowerCase().indexOf('cvent') === -1
+		event.eventTitle.toLowerCase().indexOf('test') !== 0
+		&& event.eventTitle.toLowerCase().indexOf('budget') !== 0
+		&& event.eventTitle.toLowerCase().indexOf('template') !== 0
+		&& event.eventTitle.toLowerCase().indexOf('concur') !== 0
+		&& event.eventTitle.toLowerCase().indexOf('cvent') !== 0
+		&& event.eventTitle.toLowerCase().indexOf('trustee meeting - ') !== 0
+		&& event.eventTitle.toLowerCase().indexOf('board meeting - fmr llc board of directors') !== 0
+		&& (!event.plannerName || event?.plannerName?.toLowerCase().indexOf('flynn-wright, denise') === -1)
 	))
 };
 
@@ -153,8 +159,7 @@ const getWithinDateRange = (data: FidEvent[], start: string, end: string) => {
 	const endDate = (new Date(end)).valueOf();
 	return data.filter(event => {
 		const eventStartDate = (new Date(event.startDate)).valueOf();
-		const eventEndDate = (new Date(event.endDate)).valueOf();
-		return eventStartDate > startDate && eventEndDate < endDate
+		return eventStartDate >= startDate && eventStartDate <= endDate;
 	});
 };
 
