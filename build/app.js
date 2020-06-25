@@ -1,76 +1,116 @@
 "use strict";
 $(document).ready(function () {
-    //Button on click listener.
     $('#generateReportButton').click(function () {
-        //Empty the table to prepare for the new results (or clear in case there's an error).
-        $('#results').empty();
-        try {
-            //Parse tsv to json, exclude test events, and include only events in specified date range.
-            var rawData = $('#data').val();
-            var start = $('#startDate').val();
-            var end = $('#endDate').val();
-            var parsedData = parseTsv(rawData);
-            console.log("ALL ROWS: " + parsedData.length);
-            var filteredData = removeTestRows(parsedData);
-            console.log("FILTERED ROWS: " + filteredData.length);
-            var data = getWithinDateRange(filteredData, start, end);
-            console.log("WITHIN DATE RANGE ROWS: " + data.length);
-            //Get non-cancelled events count.
-            var nonCancelledEventsCount = data.filter(function (event) { return event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1; }).length;
-            //Get events cancelled due to covid count.
-            var cancelledDueToCovidCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
-                && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1); }).length;
-            //Get events cancelled not due to covid count.	
-            var cancelledTotalCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1); }).length;
-            //Get non-cancelled events that switched from in-person to virtual count.
-            var inPersonToVirtualCount = data.filter(function (event) { return ((event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
-                ||
-                    (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf('is it now virtual?') > -1)); }).length;
-            //Get events created because of covid count.
-            var newCovidEvents = data.filter(function (event) { return event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1; });
-            var newCovidEventsCount = newCovidEvents.length;
-            //Get expected attendees to all new events.
-            var newEventExpectedAttendees = newCovidEvents
-                .map(function (event) {
-                //Parse the values of attendees expected, which might not be (but usually is) a simple number in string form.
-                var numAttendees;
-                //Check for numer in string form, or a string that begins with a number, like '500+'.
-                if (!isNaN(parseInt(event.totalAttendeesExpected.trim())))
-                    numAttendees = parseInt(event.totalAttendeesExpected.trim());
-                //Check for ranges and take the first value, like '10 - 20' should take 10.
-                else if (event.totalAttendeesExpected.indexOf('-') > -1) {
-                    var estimates = event.totalAttendeesExpected.split('-');
-                    if (!isNaN(parseInt(estimates[0].trim())))
-                        numAttendees = parseInt(estimates[0].trim());
-                    else
-                        throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+        var rawData = $('#data').val();
+        var rawInaccurateData = $('#inaccurate-data').val();
+        var start = $('#startDate').val();
+        var end = $('#endDate').val();
+        var data = parseTsv(rawData).map(function (event) { return event.eventCode; });
+        var inaccurateData = getWithinDateRange(removeTestRows(parseTsv(rawInaccurateData)), start, end).map(function (event) { return event.eventCode; });
+        console.log("FOUND IN GOOD DATA BUT NOT IN BAD DATA:");
+        for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+            var event_1 = data_1[_i];
+            var found = false;
+            for (var _a = 0, inaccurateData_1 = inaccurateData; _a < inaccurateData_1.length; _a++) {
+                var inEvent = inaccurateData_1[_a];
+                if (event_1 === inEvent) {
+                    found = true;
+                    break;
                 }
-                else
-                    throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
-                return numAttendees;
-            })
-                .reduce(function (sum, attendees) { return sum + attendees; }, 0);
-            //Get rescheduled events count.
-            var rescheduledCount = data.filter(function (event) { return event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1; }).length;
-            //Put all data into a table.
-            var tableData = [
-                ['Not cancelled', nonCancelledEventsCount],
-                ['Cancelled due to COVID', cancelledDueToCovidCount],
-                ['Total cancelled', cancelledTotalCount + 2 + " (including 2 cancelled events with blank status)"],
-                ['Switched to virtual due to COVID', inPersonToVirtualCount],
-                ['New events due to COVID', newCovidEventsCount],
-                ['Expected attendees for new events', newEventExpectedAttendees],
-                ['Rescheduled events', rescheduledCount]
-            ];
-            for (var _i = 0, tableData_1 = tableData; _i < tableData_1.length; _i++) {
-                var td = tableData_1[_i];
-                $('#results').append("<tr>\n\t\t\t\t\t<td style='border: 1px solid #aaaaaa;'>" + td[0] + "</td>\n\t\t\t\t\t<td style='border: 1px solid #aaaaaa;'>" + td[1] + "</td>\n\t\t\t\t</tr>");
             }
+            if (!found)
+                console.log(event_1);
         }
-        catch (e) {
-            console.log(e.toString());
+        console.log("FOUND IN BAD DATA BUT NOT IN GOOD DATA:");
+        for (var _b = 0, inaccurateData_2 = inaccurateData; _b < inaccurateData_2.length; _b++) {
+            var event_2 = inaccurateData_2[_b];
+            var found = false;
+            for (var _c = 0, data_2 = data; _c < data_2.length; _c++) {
+                var inEvent = data_2[_c];
+                if (event_2 === inEvent) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                console.log(event_2);
         }
     });
+    //Button on click listener.
+    // $('#generateReportButton').click(() => {
+    // 	//Empty the table to prepare for the new results (or clear in case there's an error).
+    // 	$('#results').empty();
+    // 	try {
+    // 		//Parse tsv to json, exclude test events, and include only events in specified date range.
+    // 		const rawData = $('#data').val() as string;
+    // 		const start = $('#startDate').val() as string;
+    // 		const end = $('#endDate').val() as string;
+    // 		const parsedData = parseTsv(rawData);
+    // 		console.log(`ALL ROWS: ${parsedData.length}`);
+    // 		const filteredData = removeTestRows(parsedData);
+    // 		console.log(`FILTERED ROWS: ${filteredData.length}`);
+    // 		const data = getWithinDateRange(filteredData, start, end);
+    // 		console.log(`WITHIN DATE RANGE ROWS: ${data.length}`);
+    // 		//Get non-cancelled events count.
+    // 		const nonCancelledEventsCount = data.filter(event => event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1).length;
+    // 		//Get events cancelled due to covid count.
+    // 		const cancelledDueToCovidCount = data.filter(event => (
+    // 			event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
+    // 			&& event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1
+    // 		)).length;
+    // 		//Get events cancelled not due to covid count.	
+    // 		const cancelledTotalCount = data.filter(event => (
+    // 			event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
+    // 		)).length;
+    // 		//Get non-cancelled events that switched from in-person to virtual count.
+    // 		const inPersonToVirtualCount = data.filter(event => (
+    // 			(event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
+    // 			||
+    // 			(event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf('is it now virtual?') > -1)
+    // 		)).length;
+    // 		//Get events created because of covid count.
+    // 		const newCovidEvents = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1);
+    // 		const newCovidEventsCount = newCovidEvents.length;
+    // 		//Get expected attendees to all new events.
+    // 		const newEventExpectedAttendees = newCovidEvents
+    // 			.map(event => {
+    // 				//Parse the values of attendees expected, which might not be (but usually is) a simple number in string form.
+    // 				let numAttendees;
+    // 				//Check for numer in string form, or a string that begins with a number, like '500+'.
+    // 				if(!isNaN(parseInt(event.totalAttendeesExpected.trim()))) numAttendees = parseInt(event.totalAttendeesExpected.trim());
+    // 				//Check for ranges and take the first value, like '10 - 20' should take 10.
+    // 				else if(event.totalAttendeesExpected.indexOf('-') > -1) {
+    // 					const estimates = event.totalAttendeesExpected.split('-');
+    // 					if(!isNaN(parseInt(estimates[0].trim()))) numAttendees = parseInt(estimates[0].trim());
+    // 					else throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+    // 				}
+    // 				else throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
+    // 				return numAttendees
+    // 			})
+    // 			.reduce((sum, attendees) => sum + attendees, 0)
+    // 		//Get rescheduled events count.
+    // 		const rescheduledCount = data.filter(event => event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1).length;
+    // 		//Put all data into a table.
+    // 		const tableData = [
+    // 			['Not cancelled', nonCancelledEventsCount],
+    // 			['Cancelled due to COVID', cancelledDueToCovidCount],
+    // 			['Total cancelled', `${cancelledTotalCount + 2} (including 2 cancelled events with blank status)`],
+    // 			['Switched to virtual due to COVID', inPersonToVirtualCount],
+    // 			['New events due to COVID', newCovidEventsCount],
+    // 			['Expected attendees for new events', newEventExpectedAttendees],
+    // 			['Rescheduled events', rescheduledCount]
+    // 		];
+    // 		for(const td of tableData) {
+    // 			$('#results').append(`<tr>
+    // 				<td style='border: 1px solid #aaaaaa;'>${td[0]}</td>
+    // 				<td style='border: 1px solid #aaaaaa;'>${td[1]}</td>
+    // 			</tr>`);
+    // 		}
+    // 	}
+    // 	catch(e) {
+    // 		console.log(e.toString());
+    // 	}
+    // });
 });
 //Convert tab separated string (where first row is headers) to js object.
 var parseTsv = function (rawData) {
