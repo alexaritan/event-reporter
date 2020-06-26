@@ -36,13 +36,13 @@ $(document).ready(function () {
                 //Parse the values of attendees expected, which might not be (but usually is) a simple number in string form.
                 var numAttendees;
                 //Check for numer in string form, or a string that begins with a number, like '500+'.
-                if (!isNaN(parseInt(event.totalAttendeesExpected.replace(/,/g, '').trim())))
-                    numAttendees = parseInt(event.totalAttendeesExpected.replace(/,/g, '').trim());
+                if (!isNaN(parseInt(event.totalAttendeesExpected.replace(/,/g, '').replace(/"/g, '').trim())))
+                    numAttendees = parseInt(event.totalAttendeesExpected.replace(/,/g, '').replace(/"/g, '').trim());
                 //Check for ranges and take the first value, like '10 - 20' should take 10.
                 else if (event.totalAttendeesExpected.indexOf('-') > -1) {
                     var estimates = event.totalAttendeesExpected.split('-');
-                    if (!isNaN(parseInt(estimates[0].replace(/,/g, '').trim())))
-                        numAttendees = parseInt(estimates[0].replace(/,/g, '').trim());
+                    if (!isNaN(parseInt(estimates[0].replace(/,/g, '').replace(/"/g, '').trim())))
+                        numAttendees = parseInt(estimates[0].replace(/,/g, '').replace(/"/g, '').trim());
                     else
                         throw new Error(constants.ERRORS.INVALID_ATTENDEES_VALUE(event.eventTitle, event.totalAttendeesExpected));
                 }

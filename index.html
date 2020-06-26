@@ -9,7 +9,10 @@
 	<body>
 		<div id='container'>
 			<h2>Event Report Generator</h2>
-			<textarea id='data' placeholder='Paste tab separated content here'></textarea>
+			<!--Basic textarea-->
+			<div class='md-form blue-textarea active-blue-textarea-2'>
+				<textarea id='data' placeholder='Paste tab separated content here' class='md-textarea form-control'></textarea>
+			</div>
 			<br />
 			<br />
 			<label for='startDate'>Start date</label>
@@ -20,7 +23,7 @@
 			<br />
 			<br />
 			<button id='generateReportButton'>
-				GET SHIT DONE
+				GET 💩 DONE
 			</button>
 			<br />
 			<br />
@@ -48,13 +51,23 @@
 		#data {
 			width: 1000px;
 			height: 400px;
+			border: none;
+		}
+
+		.active-blue-textarea-2 textarea.md-textarea:focus:not([readonly]) {
+			border-bottom: 1px solid #0066ff;
+			box-shadow: 0 1px 0 0 #0066ff;
+		}
+		
+		.active-blue-textarea-2.md-form textarea.md-textarea:focus:not([readonly])+label {
+			color: #0066ff;
 		}
 
 		#generateReportButton {
-			width: 110px;
+			width: 120px;
 			height: 40px;
 			background-color: white;
-			border: 1px solid #cccccc;
+			border: 1px solid #0066ff;
 		}
 
 		#generateReportButton:hover {
