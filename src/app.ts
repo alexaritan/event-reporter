@@ -4,7 +4,7 @@ $(document).ready(() => {
 	$('#generateReportButton').click(() => {
 		//Empty the results table and logs div to prepare for the new results (or clear in case there's an error).
 		log('##### Emptying results table and logs section');
-		$('#results').empty();
+		$('#results tr td').empty();
 		$('#logs').empty();
 
 		try {
@@ -25,25 +25,24 @@ $(document).ready(() => {
 				log(`##### Counting events with a request status of anything other than ${constants.COLUMNS.REQUEST_STATUS.CANCELLED}`);
 				return filters.nonCancelledEvents(event);
 			});
-			const nceString = JSON.stringify(nonCancelledEvents);
 
 			//Get events cancelled due to covid count.
-			const cancelledDueToCovidCount = data.filter(event => {
+			const cancelledDueToCovid = data.filter(event => {
 				log(`##### Counting events that contain a request status of ${constants.COLUMNS.REQUEST_STATUS.CANCELLED} and an affected by COVID value of ${constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED}`);
 				return filters.cancelledDueToCovid(event);
-			}).length;
+			});
 
 			//Get events cancelled not due to covid count.	
-			const cancelledTotalCount = data.filter(event => {
+			const cancelledTotal = data.filter(event => {
 				log(`##### Counting events that contain request status of ${constants.COLUMNS.REQUEST_STATUS.CANCELLED}`);
 				return filters.cancelled(event);
-			}).length;
+			});
 
 			//Get non-cancelled events that switched from in-person to virtual count.
-			const inPersonToVirtualCount = data.filter(event => {
+			const inPersonToVirtual = data.filter(event => {
 				log(`##### Counting events that have an affected by COVID value of ${constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL} OR ${constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL} OR BOTH an affected by COVID value of ${constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED} AND if rescheduled value of ${constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL}`);
 				return filters.inPersonToVirtual(event);
-			}).length;
+			});
 
 			//Get events created because of covid count.
 			const newCovidEvents = data.filter(event => {
@@ -71,27 +70,50 @@ $(document).ready(() => {
 				.reduce((sum, attendees) => sum + attendees, 0)
 
 			//Get rescheduled events count.
-			const rescheduledCount = data.filter(event => {
+			const rescheduled = data.filter(event => {
 				log(`##### Counting events with an affected by COVID value of ${constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED}`);
 				return filters.rescheduledCovid(event);
-			}).length;
+			});
 
 			//Put all data into a table.
 			const tableData = [
-				[`<span onClick="window.open('', 'non cancelled events', '').document.write('${nceString}')">Not cancelled</span>`, nonCancelledEvents.length],
-				['Cancelled due to COVID', cancelledDueToCovidCount],
-				['Total cancelled', `${cancelledTotalCount + 2} (including 2 cancelled events with blank status)`],
-				['Switched to virtual due to COVID', inPersonToVirtualCount],
-				['New events due to COVID', newCovidEventsCount],
+				['Not cancelled', nonCancelledEvents],
+				['Cancelled due to COVID', cancelledDueToCovid],
+				['Total cancelled', cancelledTotal],
+				['Switched to virtual due to COVID', inPersonToVirtual],
+				['New events due to COVID', newCovidEvents],
 				['Expected attendees for new events', newEventExpectedAttendees],
-				['Rescheduled events', rescheduledCount]
+				['Rescheduled events', rescheduled]
 			];
-			for(const td of tableData) {
-				$('#results').append(`<tr>
-					<td style='border: 1px solid #aaaaaa;'>${td[0]}</td>
-					<td style='border: 1px solid #aaaaaa;'>${td[1]}</td>
-				</tr>`);
+			for(let i=0; i<tableData.length; i++){
+				const row = $('#results tr')[i];
+				$($(row).children('td')[0]).html(tableData[i][0]);
+				$($(row).children('td')[1]).html(tableData[i][1].length || tableData[i][1]);
 			}
+			
+			//Clear and re-inialize on-click listeners to produce updated results.
+			$('.result').off('click');
+			$('#result1').click(() => {
+				window.open()?.document.write(jsonToCsv(nonCancelledEvents))
+			});
+			$('#result2').click(() => {
+				window.open()?.document.write(jsonToCsv(cancelledDueToCovid))
+			});
+			$('#result3').click(() => {
+				window.open()?.document.write(jsonToCsv(cancelledTotal))
+			});
+			$('#result4').click(() => {
+				window.open()?.document.write(jsonToCsv(inPersonToVirtual))
+			});
+			$('#result5').click(() => {
+				window.open()?.document.write(jsonToCsv(newCovidEvents))
+			});
+			$('#result6').click(() => {
+				window.open()?.document.write(newEventExpectedAttendees)
+			});
+			$('#result7').click(() => {
+				window.open()?.document.write(jsonToCsv(rescheduled))
+			});
 		}
 		catch(e) {
 			log(e.toString(), LogLevel.ERROR);
@@ -168,13 +190,32 @@ const parseTsv = (rawData: string): FidEvent[] => {
 	return data;
 };
 
+const jsonToCsv = (data: FidEvent[]): string => {
+	if(data.length === 0) return "";
+
+	//Put all JSON objects into this array as a string representation.
+	const csv: string[] = [];
+
+	//Add header row.
+	const headerRow = Object.keys(data[0]).join();
+	csv.push(headerRow);
+
+	//Add all the objects.
+	for(const obj of data) {
+		const str = Object.keys(obj).map(key => obj[key]).join();
+		csv.push(str);
+	}
+
+	return csv.join('<br />');
+};
+
 const removeTestRows = (data: FidEvent[]): FidEvent[] => {
 	log('Preparing to remove test rows');
 	const testRowNameIndicators = ['test', 'budget', 'template', 'concur', 'cvent', 'trustee meeting - ', 'board meeting - fmr llc board of directors'];
 	return data.filter(event => filters.testRows(event, testRowNameIndicators))
 };
 
-const getWithinDateRange = (data: FidEvent[], start: string, end: string) => {
+const getWithinDateRange = (data: FidEvent[], start: string, end: string): FidEvent[] => {
 	log('Narrowing data down to specified date range');
 	if(!start || !end) throw new Error('Missing start or end date');
 	const startDate = (new Date(start)).valueOf();
@@ -184,7 +225,7 @@ const getWithinDateRange = (data: FidEvent[], start: string, end: string) => {
 	return data.filter(event => filters.dateRange(event, startDate, endDate));
 };
 
-const log = (message: string, level?: LogLevel) => {
+const log = (message: string, level?: LogLevel): void => {
 	if(!level) level = LogLevel.INFO;
 	$('#logs').append(`<p>${level}: ${message}</p>`);
 };

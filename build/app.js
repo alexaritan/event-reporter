@@ -4,7 +4,7 @@ $(document).ready(function () {
     $('#generateReportButton').click(function () {
         //Empty the results table and logs div to prepare for the new results (or clear in case there's an error).
         log('##### Emptying results table and logs section');
-        $('#results').empty();
+        $('#results tr td').empty();
         $('#logs').empty();
         try {
             //Parse tsv to json, exclude test events, and include only events in specified date range.
@@ -19,34 +19,33 @@ $(document).ready(function () {
             var data = getWithinDateRange(filteredData, start, end);
             log("##### WITHIN DATE RANGE ROWS: " + data.length);
             //Get non-cancelled events count.
-            var nonCancelledEvents = data.filter(function (event) {
+            var nonCancelledEvents_1 = data.filter(function (event) {
                 log("##### Counting events with a request status of anything other than " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
                 return filters.nonCancelledEvents(event);
             });
-            var nceString = JSON.stringify(nonCancelledEvents);
             //Get events cancelled due to covid count.
-            var cancelledDueToCovidCount = data.filter(function (event) {
+            var cancelledDueToCovid_1 = data.filter(function (event) {
                 log("##### Counting events that contain a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED + " and an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED);
                 return filters.cancelledDueToCovid(event);
-            }).length;
+            });
             //Get events cancelled not due to covid count.	
-            var cancelledTotalCount = data.filter(function (event) {
+            var cancelledTotal_1 = data.filter(function (event) {
                 log("##### Counting events that contain request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
                 return filters.cancelled(event);
-            }).length;
+            });
             //Get non-cancelled events that switched from in-person to virtual count.
-            var inPersonToVirtualCount = data.filter(function (event) {
+            var inPersonToVirtual_1 = data.filter(function (event) {
                 log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL + " OR " + constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL + " OR BOTH an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED + " AND if rescheduled value of " + constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL);
                 return filters.inPersonToVirtual(event);
-            }).length;
+            });
             //Get events created because of covid count.
-            var newCovidEvents = data.filter(function (event) {
+            var newCovidEvents_1 = data.filter(function (event) {
                 log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT + " and a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
                 return filters.newCovidEvents(event);
             });
-            var newCovidEventsCount = newCovidEvents.length;
+            var newCovidEventsCount = newCovidEvents_1.length;
             //Get expected attendees to all new events.
-            var newEventExpectedAttendees = newCovidEvents
+            var newEventExpectedAttendees_1 = newCovidEvents_1
                 .map(function (event) {
                 //Parse the values of attendees expected, which might not be (but usually is) a simple number in string form.
                 var numAttendees;
@@ -67,24 +66,55 @@ $(document).ready(function () {
             })
                 .reduce(function (sum, attendees) { return sum + attendees; }, 0);
             //Get rescheduled events count.
-            var rescheduledCount = data.filter(function (event) {
+            var rescheduled_1 = data.filter(function (event) {
                 log("##### Counting events with an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED);
                 return filters.rescheduledCovid(event);
-            }).length;
+            });
             //Put all data into a table.
             var tableData = [
-                ["<span onClick=\"window.open('', 'non cancelled events', '').document.write('" + nceString + "')\">Not cancelled</span>", nonCancelledEvents.length],
-                ['Cancelled due to COVID', cancelledDueToCovidCount],
-                ['Total cancelled', cancelledTotalCount + 2 + " (including 2 cancelled events with blank status)"],
-                ['Switched to virtual due to COVID', inPersonToVirtualCount],
-                ['New events due to COVID', newCovidEventsCount],
-                ['Expected attendees for new events', newEventExpectedAttendees],
-                ['Rescheduled events', rescheduledCount]
+                ['Not cancelled', nonCancelledEvents_1],
+                ['Cancelled due to COVID', cancelledDueToCovid_1],
+                ['Total cancelled', cancelledTotal_1],
+                ['Switched to virtual due to COVID', inPersonToVirtual_1],
+                ['New events due to COVID', newCovidEvents_1],
+                ['Expected attendees for new events', newEventExpectedAttendees_1],
+                ['Rescheduled events', rescheduled_1]
             ];
-            for (var _i = 0, tableData_1 = tableData; _i < tableData_1.length; _i++) {
-                var td = tableData_1[_i];
-                $('#results').append("<tr>\n\t\t\t\t\t<td style='border: 1px solid #aaaaaa;'>" + td[0] + "</td>\n\t\t\t\t\t<td style='border: 1px solid #aaaaaa;'>" + td[1] + "</td>\n\t\t\t\t</tr>");
+            for (var i = 0; i < tableData.length; i++) {
+                var row = $('#results tr')[i];
+                $($(row).children('td')[0]).html(tableData[i][0]);
+                $($(row).children('td')[1]).html(tableData[i][1].length || tableData[i][1]);
             }
+            //Clear and re-inialize on-click listeners to produce updated results.
+            $('.result').off('click');
+            $('#result1').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(nonCancelledEvents_1));
+            });
+            $('#result2').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(cancelledDueToCovid_1));
+            });
+            $('#result3').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(cancelledTotal_1));
+            });
+            $('#result4').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(inPersonToVirtual_1));
+            });
+            $('#result5').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(newCovidEvents_1));
+            });
+            $('#result6').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(newEventExpectedAttendees_1);
+            });
+            $('#result7').click(function () {
+                var _a;
+                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(rescheduled_1));
+            });
         }
         catch (e) {
             log(e.toString(), LogLevel.ERROR);
@@ -155,6 +185,25 @@ var parseTsv = function (rawData) {
     }
     log('Returning parsed data');
     return data;
+};
+var jsonToCsv = function (data) {
+    if (data.length === 0)
+        return "";
+    //Put all JSON objects into this array as a string representation.
+    var csv = [];
+    //Add header row.
+    var headerRow = Object.keys(data[0]).join();
+    csv.push(headerRow);
+    var _loop_1 = function (obj) {
+        var str = Object.keys(obj).map(function (key) { return obj[key]; }).join();
+        csv.push(str);
+    };
+    //Add all the objects.
+    for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+        var obj = data_1[_i];
+        _loop_1(obj);
+    }
+    return csv.join('<br />');
 };
 var removeTestRows = function (data) {
     log('Preparing to remove test rows');
