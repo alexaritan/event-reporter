@@ -23,6 +23,7 @@ $(document).ready(function () {
                 log("##### Counting events with a request status of anything other than " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
                 return filters.nonCancelledEvents(event);
             });
+            var nceString = JSON.stringify(nonCancelledEvents);
             //Get events cancelled due to covid count.
             var cancelledDueToCovidCount = data.filter(function (event) {
                 log("##### Counting events that contain a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED + " and an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED);
@@ -72,7 +73,7 @@ $(document).ready(function () {
             }).length;
             //Put all data into a table.
             var tableData = [
-                ["<span onClick=\"document.write('" + JSON.stringify(nonCancelledEvents) + "')\">Not cancelled</span>", nonCancelledEvents.length],
+                ["<span onClick=\"window.open('', 'non cancelled events', '').document.write('" + nceString + "')\">Not cancelled</span>", nonCancelledEvents.length],
                 ['Cancelled due to COVID', cancelledDueToCovidCount],
                 ['Total cancelled', cancelledTotalCount + 2 + " (including 2 cancelled events with blank status)"],
                 ['Switched to virtual due to COVID', inPersonToVirtualCount],

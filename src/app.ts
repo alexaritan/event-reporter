@@ -25,6 +25,7 @@ $(document).ready(() => {
 				log(`##### Counting events with a request status of anything other than ${constants.COLUMNS.REQUEST_STATUS.CANCELLED}`);
 				return filters.nonCancelledEvents(event);
 			});
+			const nceString = JSON.stringify(nonCancelledEvents);
 
 			//Get events cancelled due to covid count.
 			const cancelledDueToCovidCount = data.filter(event => {
@@ -77,7 +78,7 @@ $(document).ready(() => {
 
 			//Put all data into a table.
 			const tableData = [
-				[`<span onClick="document.write('${JSON.stringify(nonCancelledEvents)}')">Not cancelled</span>`, nonCancelledEvents.length],
+				[`<span onClick="window.open('', 'non cancelled events', '').document.write('${nceString}')">Not cancelled</span>`, nonCancelledEvents.length],
 				['Cancelled due to COVID', cancelledDueToCovidCount],
 				['Total cancelled', `${cancelledTotalCount + 2} (including 2 cancelled events with blank status)`],
 				['Switched to virtual due to COVID', inPersonToVirtualCount],
