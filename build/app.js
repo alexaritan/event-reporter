@@ -2,24 +2,32 @@
 $(document).ready(function () {
     //Button on click listener.
     $('#generateReportButton').click(function () {
-        //Empty the table to prepare for the new results (or clear in case there's an error).
+        //Empty the results table and logs div to prepare for the new results (or clear in case there's an error).
+        log('##### Emptying results table and logs section');
         $('#results').empty();
+        $('#logs').empty();
         try {
             //Parse tsv to json, exclude test events, and include only events in specified date range.
+            log('##### Fetching raw data and date inputs');
             var rawData = $('#data').val();
             var start = $('#startDate').val();
             var end = $('#endDate').val();
             var parsedData = parseTsv(rawData);
-            console.log("ALL ROWS: " + parsedData.length);
+            log("##### ALL ROWS: " + parsedData.length);
             var filteredData = removeTestRows(parsedData);
-            console.log("FILTERED ROWS: " + filteredData.length);
+            log("##### FILTERED ROWS: " + filteredData.length);
             var data = getWithinDateRange(filteredData, start, end);
-            console.log("WITHIN DATE RANGE ROWS: " + data.length);
+            log("##### WITHIN DATE RANGE ROWS: " + data.length);
             //Get non-cancelled events count.
-            var nonCancelledEventsCount = data.filter(function (event) { return event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1; }).length;
+            var nonCancelledEventsCount = data.filter(function (event) {
+                log("##### Counting events with a request status of anything other than CANCELLED");
+                return filters.nonCancelledEvents(event);
+            }).length;
             //Get events cancelled due to covid count.
-            var cancelledDueToCovidCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1
-                && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1); }).length;
+            var cancelledDueToCovidCount = data.filter(function (event) {
+                log("##### Counting events that contain a request status of CANCELLED and an affected by COVID value of YES, THIS EVENT WAS CANCELLED");
+                return filters.cancelledDueToCovid(event);
+            }).length;
             //Get events cancelled not due to covid count.	
             var cancelledTotalCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1); }).length;
             //Get non-cancelled events that switched from in-person to virtual count.
@@ -52,7 +60,10 @@ $(document).ready(function () {
             })
                 .reduce(function (sum, attendees) { return sum + attendees; }, 0);
             //Get rescheduled events count.
-            var rescheduledCount = data.filter(function (event) { return event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1; }).length;
+            var rescheduledCount = data.filter(function (event) {
+                log("##### Counting events with an affected by COVID value of YES, THIS EVENT WAS RESCHEDULED");
+                return filters.rescheduledCovid(event);
+            }).length;
             //Put all data into a table.
             var tableData = [
                 ['Not cancelled', nonCancelledEventsCount],
@@ -69,18 +80,22 @@ $(document).ready(function () {
             }
         }
         catch (e) {
-            console.log(e.toString());
+            log(e.toString(), LogLevel.ERROR);
         }
     });
 });
 //Convert tab separated string (where first row is headers) to js object.
 var parseTsv = function (rawData) {
     var _a;
+    log("Preparing to parse raw tsv data into JSON array");
     //Prepare the array to return.
     var data = [];
     //Parse the input into lines and extract the header row.
+    log('Parsing raw tsv data into raw JSON array');
     var lines = rawData.split('\n');
-    var rawHeaders = (_a = lines.shift()) === null || _a === void 0 ? void 0 : _a.split('\t');
+    log('Picking out raw header row');
+    var rawHeaders = ((_a = lines.shift()) === null || _a === void 0 ? void 0 : _a.split('\t')) || [];
+    log("Raw headers parsed as: " + rawHeaders);
     //Map the header column names to my easy to read names.
     var headerMap = {
         'event title': 'eventTitle',
@@ -112,39 +127,47 @@ var parseTsv = function (rawData) {
         'covid | contracted fee ($) | vendor 2': 'vendor2ContractedFee',
         'covid | fees actually paid ($) | vendor 2': 'vendor2FeesPaid'
     };
-    var headers = rawHeaders === null || rawHeaders === void 0 ? void 0 : rawHeaders.map(function (header) { return headerMap[header.toLowerCase()]; });
+    log('Mapping raw headers to js friendly headers');
+    var headers = rawHeaders.map(function (header) {
+        var mappedHeader = headerMap[header.toLowerCase()];
+        log("Mapping raw header << " + header + " >> to << " + mappedHeader + " >>");
+        return mappedHeader;
+    });
+    log("Headers mapped to: " + headers);
     //Loop through the remaining lines and create objects from each row.
     for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
         var line = lines_1[_i];
+        log("Parsing raw line into parsed line: " + line);
         var cells = line.split('\t');
         var row = {};
         for (var i = 0; i < cells.length; i++) {
             row[headers[i]] = cells[i];
         }
+        log("Line parsed as: " + row);
         data.push(row);
     }
+    log('Returning parsed data');
     return data;
 };
 var removeTestRows = function (data) {
-    return data.filter(function (event) {
-        var _a;
-        return (event.eventTitle.toLowerCase().indexOf('test') !== 0
-            && event.eventTitle.toLowerCase().indexOf('budget') !== 0
-            && event.eventTitle.toLowerCase().indexOf('template') !== 0
-            && event.eventTitle.toLowerCase().indexOf('concur') !== 0
-            && event.eventTitle.toLowerCase().indexOf('cvent') !== 0
-            && event.eventTitle.toLowerCase().indexOf('trustee meeting - ') !== 0
-            && event.eventTitle.toLowerCase().indexOf('board meeting - fmr llc board of directors') !== 0
-            && (!event.plannerName || ((_a = event === null || event === void 0 ? void 0 : event.plannerName) === null || _a === void 0 ? void 0 : _a.toLowerCase().indexOf('flynn-wright, denise')) === -1));
-    });
+    log('Preparing to remove test rows');
+    var testRowNameIndicators = ['test', 'budget', 'template', 'concur', 'cvent', 'trustee meeting - ', 'board meeting - fmr llc board of directors'];
+    return data.filter(function (event) { return filters.testRows(event, testRowNameIndicators); });
 };
 var getWithinDateRange = function (data, start, end) {
+    log('Narrowing data down to specified date range');
+    if (!start || !end)
+        throw new Error('Missing start or end date');
     var startDate = (new Date(start)).valueOf();
+    log("Selected start date: " + startDate);
     var endDate = (new Date(end)).valueOf() + (1000 * 60 * 60 * 24);
-    return data.filter(function (event) {
-        var eventStartDate = (new Date(event.startDate)).valueOf();
-        return eventStartDate >= startDate && eventStartDate <= endDate;
-    });
+    log("Selected end date: " + endDate);
+    return data.filter(function (event) { return filters.dateRange(event, startDate, endDate); });
+};
+var log = function (message, level) {
+    if (!level)
+        level = LogLevel.INFO;
+    $('#logs').append("<p>" + level + ": " + message + "</p>");
 };
 var constants = {
     COLUMNS: {
@@ -164,3 +187,77 @@ var constants = {
         INVALID_ATTENDEES_VALUE: function (eventTitle, totalAttendeesExpected) { return "Could not parse number of attendees for event titled " + eventTitle + ". Attendees value was set as " + totalAttendeesExpected + "."; }
     }
 };
+var filters = {
+    cancelledDueToCovid: function (event) {
+        log("-- Event title: " + event.eventTitle);
+        log("-- Event request status: " + event.requestStatus);
+        log("-- Event affected by COVID status: " + event.affectedByCovid);
+        if (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1 && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1) {
+            return true;
+        }
+        return false;
+    },
+    dateRange: function (event, startDate, endDate) {
+        log("Applying date filter to event titled: " + event.eventTitle);
+        //Check whether or not the event takes place during the provided date range.
+        var eventStartDate = (new Date(event.startDate)).valueOf();
+        if (eventStartDate >= startDate && eventStartDate <= endDate) {
+            log('Event is within date range');
+            return true;
+        }
+        else {
+            log('Excluding event as it is outside provided date range');
+            return false;
+        }
+    },
+    nonCancelledEvents: function (event) {
+        log("-- Event title: " + event.eventTitle);
+        log("-- Event request status: " + event.requestStatus);
+        if (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1) {
+            log('---- Including event');
+            return true;
+        }
+        else {
+            log('---- Excluding event');
+            return false;
+        }
+    },
+    rescheduledCovid: function (event) {
+        log("-- Event title: " + event.eventTitle);
+        log("-- Event affected by covid status: " + event.affectedByCovid);
+        if (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1) {
+            log('---- Including event');
+            return true;
+        }
+        else {
+            log('---- Excluding event');
+            return false;
+        }
+    },
+    testRows: function (event, testRowNameIndicators) {
+        log("Applying filter to event titled: " + event.eventTitle);
+        //Check if the event title starts with any of the test row indicators.
+        for (var _i = 0, testRowNameIndicators_1 = testRowNameIndicators; _i < testRowNameIndicators_1.length; _i++) {
+            var indicator = testRowNameIndicators_1[_i];
+            if (event.eventTitle.toLowerCase().indexOf(indicator) === 0) {
+                log("Excluding event because it contains a test event indicator");
+                log("--- Event: " + event.eventTitle);
+                log("--- Matching indicator: " + indicator);
+                return false;
+            }
+        }
+        //Check if the event is planned by a person whose events should be excluded.
+        if (!event.plannerName || event.plannerName.toLowerCase().indexOf('n-wright, de') > -1) {
+            log("Excluding event because of the planner value: " + event.plannerName);
+            return false;
+        }
+        //If no conditions match, this is not a test row, so don't remove it.
+        log('Event is not a test row');
+        return true;
+    }
+};
+var LogLevel;
+(function (LogLevel) {
+    LogLevel["INFO"] = "INFO";
+    LogLevel["ERROR"] = "ERROR";
+})(LogLevel || (LogLevel = {}));
