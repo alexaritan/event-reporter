@@ -291,7 +291,7 @@ var filters = {
             }
         }
         //Check if the event is planned by a person whose events should be excluded.
-        if (!event.plannerName || event.plannerName.toLowerCase().indexOf('n-wright, de') > -1) {
+        if (event.plannerName && event.plannerName.toLowerCase().indexOf('n-wright, de') > -1) {
             log("---- Excluding event");
             log("------ Planner value: " + event.plannerName);
             return false;
