@@ -20,23 +20,29 @@ $(document).ready(function () {
             log("##### WITHIN DATE RANGE ROWS: " + data.length);
             //Get non-cancelled events count.
             var nonCancelledEventsCount = data.filter(function (event) {
-                log("##### Counting events with a request status of anything other than CANCELLED");
+                log("##### Counting events with a request status of anything other than " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
                 return filters.nonCancelledEvents(event);
             }).length;
             //Get events cancelled due to covid count.
             var cancelledDueToCovidCount = data.filter(function (event) {
-                log("##### Counting events that contain a request status of CANCELLED and an affected by COVID value of YES, THIS EVENT WAS CANCELLED");
+                log("##### Counting events that contain a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED + " and an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED);
                 return filters.cancelledDueToCovid(event);
             }).length;
             //Get events cancelled not due to covid count.	
-            var cancelledTotalCount = data.filter(function (event) { return (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1); }).length;
+            var cancelledTotalCount = data.filter(function (event) {
+                log("##### Counting events that contain request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+                return filters.cancelled(event);
+            }).length;
             //Get non-cancelled events that switched from in-person to virtual count.
-            var inPersonToVirtualCount = data.filter(function (event) { return ((event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
-                ||
-                    (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf('is it now virtual?') > -1)); }).length;
+            var inPersonToVirtualCount = data.filter(function (event) {
+                log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL + " OR " + constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL + " OR BOTH an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED + " AND if rescheduled value of " + constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL);
+                return filters.inPersonToVirtual(event);
+            }).length;
             //Get events created because of covid count.
-            var newCovidEvents = data.filter(function (event) { return (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1
-                && event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1); });
+            var newCovidEvents = data.filter(function (event) {
+                log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT + " and a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+                return filters.newCovidEvents(event);
+            });
             var newCovidEventsCount = newCovidEvents.length;
             //Get expected attendees to all new events.
             var newEventExpectedAttendees = newCovidEvents
@@ -61,7 +67,7 @@ $(document).ready(function () {
                 .reduce(function (sum, attendees) { return sum + attendees; }, 0);
             //Get rescheduled events count.
             var rescheduledCount = data.filter(function (event) {
-                log("##### Counting events with an affected by COVID value of YES, THIS EVENT WAS RESCHEDULED");
+                log("##### Counting events with an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED);
                 return filters.rescheduledCovid(event);
             }).length;
             //Put all data into a table.
@@ -179,6 +185,9 @@ var constants = {
             NOT_AFFECTED: 'no, this event was not affected by covid',
             RESCHEDULED: 'yes, this event was rescheduled'
         },
+        IF_RESCHEDULED: {
+            NOW_VIRTUAL: 'is it now virtual?'
+        },
         REQUEST_STATUS: {
             CANCELLED: 'cancelled'
         }
@@ -188,27 +197,63 @@ var constants = {
     }
 };
 var filters = {
+    cancelled: function (event) {
+        log("-- Event title: " + event.eventTitle);
+        log("-- Event request status: " + event.requestStatus);
+        if (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1) {
+            log('---- Including event');
+            return true;
+        }
+        log('---- Excluding event');
+        return false;
+    },
     cancelledDueToCovid: function (event) {
         log("-- Event title: " + event.eventTitle);
         log("-- Event request status: " + event.requestStatus);
         log("-- Event affected by COVID status: " + event.affectedByCovid);
         if (event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) > -1 && event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED) > -1) {
+            log('---- Including event');
             return true;
         }
+        log('---- Excluding event');
         return false;
     },
     dateRange: function (event, startDate, endDate) {
-        log("Applying date filter to event titled: " + event.eventTitle);
+        log("-- Event title: " + event.eventTitle);
         //Check whether or not the event takes place during the provided date range.
         var eventStartDate = (new Date(event.startDate)).valueOf();
         if (eventStartDate >= startDate && eventStartDate <= endDate) {
-            log('Event is within date range');
+            log('---- Including event');
             return true;
         }
         else {
-            log('Excluding event as it is outside provided date range');
+            log('---- Excluding event');
             return false;
         }
+    },
+    inPersonToVirtual: function (event) {
+        log("-- Event title: " + event.eventTitle);
+        log("-- Event affected by covid: " + event.affectedByCovid);
+        log("-- Event if rescheduled: " + event.ifRescheduled);
+        if ((event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL) > -1 || event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL) > -1)
+            || (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED) > -1 && event.ifRescheduled.toLowerCase().indexOf(constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL) > -1)) {
+            log('---- Including event');
+            return true;
+        }
+        log('---- Excluding event');
+        return false;
+    },
+    newCovidEvents: function (event) {
+        log("-- Event title: " + event.eventTitle);
+        log("-- Event affected by covid: " + event.affectedByCovid);
+        log("-- Event request status: " + event.requestStatus);
+        if (event.affectedByCovid.toLowerCase().indexOf(constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT) > -1
+            && event.requestStatus.toLowerCase().indexOf(constants.COLUMNS.REQUEST_STATUS.CANCELLED) === -1) {
+            log('---- Including event');
+            return true;
+        }
+        log('---- Excluding event');
+        return false;
     },
     nonCancelledEvents: function (event) {
         log("-- Event title: " + event.eventTitle);
@@ -235,24 +280,24 @@ var filters = {
         }
     },
     testRows: function (event, testRowNameIndicators) {
-        log("Applying filter to event titled: " + event.eventTitle);
+        log("-- Event title: " + event.eventTitle);
         //Check if the event title starts with any of the test row indicators.
         for (var _i = 0, testRowNameIndicators_1 = testRowNameIndicators; _i < testRowNameIndicators_1.length; _i++) {
             var indicator = testRowNameIndicators_1[_i];
             if (event.eventTitle.toLowerCase().indexOf(indicator) === 0) {
-                log("Excluding event because it contains a test event indicator");
-                log("--- Event: " + event.eventTitle);
-                log("--- Matching indicator: " + indicator);
+                log("---- Excluding event because it contains a test event indicator");
+                log("------ Matching indicator: " + indicator);
                 return false;
             }
         }
         //Check if the event is planned by a person whose events should be excluded.
         if (!event.plannerName || event.plannerName.toLowerCase().indexOf('n-wright, de') > -1) {
-            log("Excluding event because of the planner value: " + event.plannerName);
+            log("---- Excluding event");
+            log("------ Planner value: " + event.plannerName);
             return false;
         }
         //If no conditions match, this is not a test row, so don't remove it.
-        log('Event is not a test row');
+        log('---- Including event');
         return true;
     }
 };
