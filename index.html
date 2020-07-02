@@ -31,34 +31,58 @@
 			<br />
 			<h2>Results</h2>
 			<table id='results'>
-				<tr>
-					<td id='result1' class='result'></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td id='result2' class='result'></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td id='result3' class='result'></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td id='result4' class='result'></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td id='result5' class='result'></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td id='result6' class='result'></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td id='result7' class='result'></td>
-					<td></td>
-				</tr>
+				<thead>
+					<tr>
+						<td>Category</td>
+						<td>Result</td>
+						<td>View as Table</td>
+						<td>View as CSV</td>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable1' class='viewAs'></td>
+						<td id='viewAsCsv1' class='viewAs'></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable2' class='viewAs'></td>
+						<td id='viewAsCsv2' class='viewAs'></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable3' class='viewAs'></td>
+						<td id='viewAsCsv3' class='viewAs'></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable4' class='viewAs'></td>
+						<td id='viewAsCsv4' class='viewAs'></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable5' class='viewAs'></td>
+						<td id='viewAsCsv5' class='viewAs'></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable6' class='viewAs'></td>
+						<td id='viewAsCsv6' class='viewAs'></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td id='viewAsTable7' class='viewAs'></td>
+						<td id='viewAsCsv7' class='viewAs'></td>
+					</tr>
+				</tbody>
 			</table>
 			<br />
 			<br />
@@ -77,6 +101,19 @@
 			<br />
 			<br />
 			<br />
+			<div id='viewAsModal' class='modal hidden'>
+				<div class='modal-content'>
+					<div class='modal-header'>
+						<span class='close'>&times;</span>
+						<h2>Data</h2>
+					</div>
+					<div id='viewAsModalBody' class='modal-body'>
+					</div>
+					<div class='modal-footer'>
+						Some footer text
+					</div>
+				</div>
+			</div>
 		</div>
 	</body>
 
@@ -123,8 +160,16 @@
 			width: 800px;
 		}
 
+		#results thead td {
+			font-weight: bold;
+		}
+
 		#results td {
 			border: 1px solid #aaaaaa;
+		}
+
+		.viewAs:hover {
+			cursor: pointer;
 		}
 
 		#logs {
@@ -133,6 +178,80 @@
 
 		#logs p {
 			margin: 0;
+			width:100%;
+			overflow-wrap: break-word;
 		}
+
+		 /* The Modal (background) */
+		.modal {
+			position: fixed; /* Stay in place */
+			z-index: 1; /* Sit on top */
+			left: 0;
+			width: 100%; /* Full width */
+			height: 100%; /* Full height */
+			overflow: auto; /* Enable scroll if needed */
+			background-color: rgb(0,0,0); /* Fallback color */
+			background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+		}
+
+		.modal.hidden {
+			top: -3000px;
+			opacity: 0;
+			transition: top 0ms 300ms, opacity 300ms;
+		}
+
+		.modal.visible {
+			top: 0;
+			opacity: 1;
+			transition: top 0ms, opacity 300ms;
+		}
+
+		/* Modal Header */
+		.modal-header {
+			padding: 2px 16px;
+		}
+
+		/* Modal Body */
+		.modal-body {
+			padding: 2px 16px;
+			overflow-x: scroll;
+		}
+
+		/* Modal Footer */
+		.modal-footer {
+			padding: 2px 16px;
+		}
+
+		/* Modal Content */
+		.modal-content {
+			position: relative;
+			background-color: #fefefe;
+			margin: auto;
+			padding: 0;
+			border: 1px solid #888;
+			width: 80%;
+			box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+		}
+
+		/* The Close Button */
+		.close {
+			color: #aaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+		}
+
+		.close:hover,
+		.close:focus {
+			color: black;
+			text-decoration: none;
+			cursor: pointer;
+		}
+
+		/* Add Animation */
+		@keyframes animatetop {
+			from {top: -300px; opacity: 0}
+			to {top: 0; opacity: 1}
+		} 
 	</style>
 </html>

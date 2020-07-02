@@ -4,7 +4,7 @@ $(document).ready(function () {
     $('#generateReportButton').click(function () {
         //Empty the results table and logs div to prepare for the new results (or clear in case there's an error).
         log('##### Emptying results table and logs section');
-        $('#results tr td').empty();
+        $('#results tbody tr td').empty();
         $('#logs').empty();
         try {
             //Parse tsv to json, exclude test events, and include only events in specified date range.
@@ -81,44 +81,98 @@ $(document).ready(function () {
                 ['Rescheduled events', rescheduled_1]
             ];
             for (var i = 0; i < tableData.length; i++) {
-                var row = $('#results tr')[i];
+                var row = $('#results tbody tr')[i];
                 $($(row).children('td')[0]).html(tableData[i][0]);
                 $($(row).children('td')[1]).html(tableData[i][1].length || tableData[i][1]);
+                $($(row).children('td')[2]).html('view');
+                $($(row).children('td')[3]).html('view');
             }
             //Clear and re-inialize on-click listeners to produce updated results.
-            $('.result').off('click');
-            $('#result1').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(nonCancelledEvents_1));
+            //This is ugly AF. This is bad and you should feel bad.
+            $('.viewAs').off('click');
+            var viewAs = $('.viewAs');
+            $(viewAs[0]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(nonCancelledEvents_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
-            $('#result2').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(cancelledDueToCovid_1));
+            $(viewAs[1]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(nonCancelledEvents_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
-            $('#result3').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(cancelledTotal_1));
+            $(viewAs[2]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(cancelledDueToCovid_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
-            $('#result4').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(inPersonToVirtual_1));
+            $(viewAs[3]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(cancelledDueToCovid_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
-            $('#result5').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(newCovidEvents_1));
+            $(viewAs[4]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(cancelledTotal_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
-            $('#result6').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(newEventExpectedAttendees_1);
+            $(viewAs[5]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(cancelledTotal_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
-            $('#result7').click(function () {
-                var _a;
-                (_a = window.open()) === null || _a === void 0 ? void 0 : _a.document.write(jsonToCsv(rescheduled_1));
+            $(viewAs[6]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(inPersonToVirtual_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[7]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(inPersonToVirtual_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[8]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(newCovidEvents_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[9]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(newCovidEvents_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[10]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(newEventExpectedAttendees_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[11]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(newEventExpectedAttendees_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[12]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToHtmlTable(rescheduled_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
+            });
+            $(viewAs[13]).click(function () {
+                $('#viewAsModalBody').empty();
+                $('#viewAsModalBody').html(jsonToCsv(rescheduled_1));
+                $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
         }
         catch (e) {
             log(e.toString(), LogLevel.ERROR);
         }
+    });
+    //Configure modal closer.
+    $('.close').click(function () {
+        $('#viewAsModal').removeClass('visible').addClass('hidden');
+    });
+    $(window).click(function (event) {
+        if ($(event.target).prop('id') === 'viewAsModal')
+            $('#viewAsModal').removeClass('visible').addClass('hidden');
     });
 });
 //Convert tab separated string (where first row is headers) to js object.
@@ -204,6 +258,27 @@ var jsonToCsv = function (data) {
         _loop_1(obj);
     }
     return csv.join('<br />');
+};
+var jsonToHtmlTable = function (data) {
+    if (data.length === 0)
+        throw new Error('Empty array provided to #jsonToHtmlTable');
+    //Parse out keys from provided JSON objects to use as header row in table.
+    var headerRow = Object.keys(data[0]);
+    //Create HTML table header row.
+    var headerTableRow = headerRow.map(function (header) { return "<td style='border: 1px solid black'>" + header + "</td>"; }).join('');
+    //Create the rest of the HTML table rows.
+    var restOfTheRows = [];
+    for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
+        var event_1 = data_2[_i];
+        var row = '<tr>';
+        for (var _a = 0, headerRow_1 = headerRow; _a < headerRow_1.length; _a++) {
+            var header = headerRow_1[_a];
+            row += "<td style='border: 1px solid black'>" + event_1[header] + "</td>";
+        }
+        row += '</tr>';
+        restOfTheRows.push(row);
+    }
+    return "\n\t\t<table>\n\t\t\t<thead style='font-weight: bold;'>\n\t\t\t\t<tr>\n\t\t\t\t\t" + headerTableRow + "\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t" + restOfTheRows.join('') + "\n\t\t\t</tbody>\n\t\t</table>\n\t";
 };
 var removeTestRows = function (data) {
     log('Preparing to remove test rows');

@@ -4,7 +4,7 @@ $(document).ready(() => {
 	$('#generateReportButton').click(() => {
 		//Empty the results table and logs div to prepare for the new results (or clear in case there's an error).
 		log('##### Emptying results table and logs section');
-		$('#results tr td').empty();
+		$('#results tbody tr td').empty();
 		$('#logs').empty();
 
 		try {
@@ -86,38 +86,100 @@ $(document).ready(() => {
 				['Rescheduled events', rescheduled]
 			];
 			for(let i=0; i<tableData.length; i++){
-				const row = $('#results tr')[i];
+				const row = $('#results tbody tr')[i];
 				$($(row).children('td')[0]).html(tableData[i][0]);
 				$($(row).children('td')[1]).html(tableData[i][1].length || tableData[i][1]);
+				$($(row).children('td')[2]).html('view');
+				$($(row).children('td')[3]).html('view');
 			}
 			
 			//Clear and re-inialize on-click listeners to produce updated results.
-			$('.result').off('click');
-			$('#result1').click(() => {
-				window.open()?.document.write(jsonToCsv(nonCancelledEvents))
+			//This is ugly AF. This is bad and you should feel bad.
+			$('.viewAs').off('click');
+			const viewAs = $('.viewAs');
+			$(viewAs[0]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(nonCancelledEvents));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
-			$('#result2').click(() => {
-				window.open()?.document.write(jsonToCsv(cancelledDueToCovid))
+			$(viewAs[1]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(nonCancelledEvents));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
-			$('#result3').click(() => {
-				window.open()?.document.write(jsonToCsv(cancelledTotal))
+			$(viewAs[2]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(cancelledDueToCovid));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
-			$('#result4').click(() => {
-				window.open()?.document.write(jsonToCsv(inPersonToVirtual))
+			$(viewAs[3]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(cancelledDueToCovid));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
-			$('#result5').click(() => {
-				window.open()?.document.write(jsonToCsv(newCovidEvents))
+			$(viewAs[4]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(cancelledTotal));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
-			$('#result6').click(() => {
-				window.open()?.document.write(newEventExpectedAttendees)
+			$(viewAs[5]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(cancelledTotal));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
-			$('#result7').click(() => {
-				window.open()?.document.write(jsonToCsv(rescheduled))
+			$(viewAs[6]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(inPersonToVirtual));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[7]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(inPersonToVirtual));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[8]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(newCovidEvents));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[9]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(newCovidEvents));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[10]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(newEventExpectedAttendees));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[11]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(newEventExpectedAttendees));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[12]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToHtmlTable(rescheduled));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
+			});
+			$(viewAs[13]).click(() => {
+				$('#viewAsModalBody').empty();
+				$('#viewAsModalBody').html(jsonToCsv(rescheduled));
+				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 		}
 		catch(e) {
 			log(e.toString(), LogLevel.ERROR);
 		}
+	});
+
+	//Configure modal closer.
+	$('.close').click(() => {
+		$('#viewAsModal').removeClass('visible').addClass('hidden');
+	});
+	
+	$(window).click((event) => {
+		if($(event.target).prop('id') === 'viewAsModal') $('#viewAsModal').removeClass('visible').addClass('hidden');
 	});
 
 });
@@ -207,6 +269,41 @@ const jsonToCsv = (data: FidEvent[]): string => {
 	}
 
 	return csv.join('<br />');
+};
+
+const jsonToHtmlTable = (data: FidEvent[]): string => {
+	if(data.length === 0) throw new Error('Empty array provided to #jsonToHtmlTable');
+
+	//Parse out keys from provided JSON objects to use as header row in table.
+	const headerRow = Object.keys(data[0]);
+
+	//Create HTML table header row.
+	const headerTableRow = headerRow.map(header => `<td style='border: 1px solid black'>${header}</td>`).join('');
+
+	//Create the rest of the HTML table rows.
+	const restOfTheRows: string[] = [];
+	for(const event of data) {
+		let row = '<tr>';
+		for(const header of headerRow) {
+			row += `<td style='border: 1px solid black'>${event[header]}</td>`;
+		}
+		row += '</tr>';
+		restOfTheRows.push(row);
+	}
+
+	return `
+		<table>
+			<thead style='font-weight: bold;'>
+				<tr>
+					${headerTableRow}
+				</tr>
+			</thead>
+			<tbody>
+				${restOfTheRows.join('')}
+			</tbody>
+		</table>
+	`;
+
 };
 
 const removeTestRows = (data: FidEvent[]): FidEvent[] => {
