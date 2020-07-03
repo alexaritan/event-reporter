@@ -94,71 +94,85 @@ $(document).ready(function () {
             $(viewAs[0]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(nonCancelledEvents_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[1]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(nonCancelledEvents_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[2]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(cancelledDueToCovid_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[3]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(cancelledDueToCovid_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[4]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(cancelledTotal_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[5]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(cancelledTotal_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[6]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(inPersonToVirtual_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[7]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(inPersonToVirtual_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[8]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(newCovidEvents_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[9]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(newCovidEvents_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[10]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(newEventExpectedAttendees_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[11]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(newEventExpectedAttendees_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[12]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToHtmlTable(rescheduled_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
             $(viewAs[13]).click(function () {
                 $('#viewAsModalBody').empty();
                 $('#viewAsModalBody').html(jsonToCsv(rescheduled_1));
+                $('#container').addClass('no-select');
                 $('#viewAsModal').removeClass('hidden').addClass('visible');
             });
         }
@@ -168,11 +182,14 @@ $(document).ready(function () {
     });
     //Configure modal closer.
     $('.close').click(function () {
+        $('#container').removeClass('no-select');
         $('#viewAsModal').removeClass('visible').addClass('hidden');
     });
     $(window).click(function (event) {
-        if ($(event.target).prop('id') === 'viewAsModal')
+        if ($(event.target).prop('id') === 'viewAsModal') {
+            $('#container').removeClass('no-select');
             $('#viewAsModal').removeClass('visible').addClass('hidden');
+        }
     });
 });
 //Convert tab separated string (where first row is headers) to js object.

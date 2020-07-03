@@ -100,71 +100,85 @@ $(document).ready(() => {
 			$(viewAs[0]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(nonCancelledEvents));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[1]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(nonCancelledEvents));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[2]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(cancelledDueToCovid));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[3]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(cancelledDueToCovid));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[4]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(cancelledTotal));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[5]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(cancelledTotal));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[6]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(inPersonToVirtual));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[7]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(inPersonToVirtual));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[8]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(newCovidEvents));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[9]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(newCovidEvents));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[10]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(newEventExpectedAttendees));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[11]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(newEventExpectedAttendees));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[12]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToHtmlTable(rescheduled));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 			$(viewAs[13]).click(() => {
 				$('#viewAsModalBody').empty();
 				$('#viewAsModalBody').html(jsonToCsv(rescheduled));
+				$('#container').addClass('no-select');
 				$('#viewAsModal').removeClass('hidden').addClass('visible');
 			});
 		}
@@ -175,11 +189,15 @@ $(document).ready(() => {
 
 	//Configure modal closer.
 	$('.close').click(() => {
+		$('#container').removeClass('no-select');
 		$('#viewAsModal').removeClass('visible').addClass('hidden');
 	});
 	
 	$(window).click((event) => {
-		if($(event.target).prop('id') === 'viewAsModal') $('#viewAsModal').removeClass('visible').addClass('hidden');
+		if($(event.target).prop('id') === 'viewAsModal') {
+			$('#container').removeClass('no-select');
+			$('#viewAsModal').removeClass('visible').addClass('hidden');
+		}
 	});
 
 });
