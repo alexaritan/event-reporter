@@ -22,30 +22,19 @@ $(document).ready(function () {
             log("##### ROWS WITHIN DATE RANGE: " + data.length);
             //Get non-cancelled events count.
             log("##### Counting events with a request status of anything other than " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
-            var nonCancelledEvents = data.filter(function (event) {
-                return filters.nonCancelledEvents(event);
-            });
+            var nonCancelledEvents = data.filter(function (event) { return filters.nonCancelledEvents(event); });
             //Get events cancelled due to covid count.
             log("##### Counting events that contain a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED + " and an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED);
-            var cancelledDueToCovid = data.filter(function (event) {
-                return filters.cancelledDueToCovid(event);
-            });
+            var cancelledDueToCovid = data.filter(function (event) { return filters.cancelledDueToCovid(event); });
             //Get events cancelled not due to covid count
             log("##### Counting events that contain request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
-            var cancelledTotal = data.filter(function (event) {
-                return filters.cancelled(event);
-            });
+            var cancelledTotal = data.filter(function (event) { return filters.cancelled(event); });
             //Get non-cancelled events that switched from in-person to virtual count.
             log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL + " OR " + constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL + " OR BOTH an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED + " AND if rescheduled value of " + constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL);
-            var inPersonToVirtual = data.filter(function (event) {
-                return filters.inPersonToVirtual(event);
-            });
+            var inPersonToVirtual = data.filter(function (event) { return filters.inPersonToVirtual(event); });
             //Get events created because of covid count.
             log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT + " and a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
-            var newCovidEvents = data.filter(function (event) {
-                return filters.newCovidEvents(event);
-            });
-            var newCovidEventsCount = newCovidEvents.length;
+            var newCovidEvents = data.filter(function (event) { return filters.newCovidEvents(event); });
             //Get expected attendees to all new events.
             log("##### Counting expected attendees at events");
             var newEventExpectedAttendees = newCovidEvents
@@ -70,9 +59,7 @@ $(document).ready(function () {
                 .reduce(function (sum, attendees) { return sum + attendees; }, 0);
             //Get rescheduled events count.
             log("##### Counting events with an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED);
-            var rescheduled = data.filter(function (event) {
-                return filters.rescheduledCovid(event);
-            });
+            var rescheduled = data.filter(function (event) { return filters.rescheduledCovid(event); });
             log('##### Populating results table');
             //Put all data into a table.
             var tableData_1 = [
