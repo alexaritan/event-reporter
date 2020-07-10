@@ -74,12 +74,11 @@ $(document).ready(function () {
             for (var i = 0; i < tableData_1.length; i++) {
                 var row = $('#results tbody tr')[i];
                 $($(row).children('td')[0]).html(tableData_1[i][0]);
-                $($(row).children('td')[1]).html(tableData_1[i][1].length || tableData_1[i][1]);
+                $($(row).children('td')[1]).html(tableData_1[i][1].length !== undefined ? tableData_1[i][1].length : tableData_1[i][1]);
                 $($(row).children('td')[2]).html("<span class='viewAsTable'>Table</span> / <span class='viewAsCsv'>CSV</span>");
             }
             log('##### Results table populated');
-            //Clear and re-inialize on-click listeners to produce updated results.
-            //This is ugly AF. This is bad and you should feel bad.
+            //Clear and re-inialize on click listeners to produce updated results.
             log('##### Initializing on click listeners');
             $('.viewAsTable, .viewAsCsv').off('click');
             var viewAsTable = $('.viewAsTable');
