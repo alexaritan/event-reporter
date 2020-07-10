@@ -2,11 +2,13 @@
 $(document).ready(function () {
     //Button on click listener.
     $('#generateReportButton').click(function () {
+        //Show the runInfo div.
+        $('#runInfo').show();
         //Empty the results table and logs div to prepare for the new results (or clear in case there's an error).
-        log('##### Emptying results table and logs section');
-        $('#results tbody tr td').empty();
         $('#logs').empty();
+        $('#results tbody tr td').empty();
         try {
+            log('##### Preparing to get &#128169; done');
             //Parse tsv to json, exclude test events, and include only events in specified date range.
             log('##### Fetching raw data and date inputs');
             var rawData = $('#data').val();
@@ -17,35 +19,36 @@ $(document).ready(function () {
             var filteredData = removeTestRows(parsedData);
             log("##### FILTERED ROWS: " + filteredData.length);
             var data = getWithinDateRange(filteredData, start, end);
-            log("##### WITHIN DATE RANGE ROWS: " + data.length);
+            log("##### ROWS WITHIN DATE RANGE: " + data.length);
             //Get non-cancelled events count.
-            var nonCancelledEvents_1 = data.filter(function (event) {
-                log("##### Counting events with a request status of anything other than " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+            log("##### Counting events with a request status of anything other than " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+            var nonCancelledEvents = data.filter(function (event) {
                 return filters.nonCancelledEvents(event);
             });
             //Get events cancelled due to covid count.
-            var cancelledDueToCovid_1 = data.filter(function (event) {
-                log("##### Counting events that contain a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED + " and an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED);
+            log("##### Counting events that contain a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED + " and an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.CANCELLED);
+            var cancelledDueToCovid = data.filter(function (event) {
                 return filters.cancelledDueToCovid(event);
             });
-            //Get events cancelled not due to covid count.	
-            var cancelledTotal_1 = data.filter(function (event) {
-                log("##### Counting events that contain request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+            //Get events cancelled not due to covid count
+            log("##### Counting events that contain request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+            var cancelledTotal = data.filter(function (event) {
                 return filters.cancelled(event);
             });
             //Get non-cancelled events that switched from in-person to virtual count.
-            var inPersonToVirtual_1 = data.filter(function (event) {
-                log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL + " OR " + constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL + " OR BOTH an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED + " AND if rescheduled value of " + constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL);
+            log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.HYBRID_TO_VIRTUAL + " OR " + constants.COLUMNS.AFFECTED_BY_COVID.IN_PERSON_TO_VIRTUAL + " OR BOTH an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED + " AND if rescheduled value of " + constants.COLUMNS.IF_RESCHEDULED.NOW_VIRTUAL);
+            var inPersonToVirtual = data.filter(function (event) {
                 return filters.inPersonToVirtual(event);
             });
             //Get events created because of covid count.
-            var newCovidEvents_1 = data.filter(function (event) {
-                log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT + " and a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+            log("##### Counting events that have an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.NEW_EVENT + " and a request status of " + constants.COLUMNS.REQUEST_STATUS.CANCELLED);
+            var newCovidEvents = data.filter(function (event) {
                 return filters.newCovidEvents(event);
             });
-            var newCovidEventsCount = newCovidEvents_1.length;
+            var newCovidEventsCount = newCovidEvents.length;
             //Get expected attendees to all new events.
-            var newEventExpectedAttendees_1 = newCovidEvents_1
+            log("##### Counting expected attendees at events");
+            var newEventExpectedAttendees = newCovidEvents
                 .map(function (event) {
                 //Parse the values of attendees expected, which might not be (but usually is) a simple number in string form.
                 var numAttendees;
@@ -66,115 +69,55 @@ $(document).ready(function () {
             })
                 .reduce(function (sum, attendees) { return sum + attendees; }, 0);
             //Get rescheduled events count.
-            var rescheduled_1 = data.filter(function (event) {
-                log("##### Counting events with an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED);
+            log("##### Counting events with an affected by COVID value of " + constants.COLUMNS.AFFECTED_BY_COVID.RESCHEDULED);
+            var rescheduled = data.filter(function (event) {
                 return filters.rescheduledCovid(event);
             });
+            log('##### Populating results table');
             //Put all data into a table.
-            var tableData = [
-                ['Not cancelled', nonCancelledEvents_1],
-                ['Cancelled due to COVID', cancelledDueToCovid_1],
-                ['Total cancelled', cancelledTotal_1],
-                ['Switched to virtual due to COVID', inPersonToVirtual_1],
-                ['New events due to COVID', newCovidEvents_1],
-                ['Expected attendees for new events', newEventExpectedAttendees_1],
-                ['Rescheduled events', rescheduled_1]
+            var tableData_1 = [
+                ['Not cancelled', nonCancelledEvents],
+                ['Cancelled due to COVID', cancelledDueToCovid],
+                ['Total cancelled', cancelledTotal],
+                ['Switched to virtual due to COVID', inPersonToVirtual],
+                ['New events due to COVID', newCovidEvents],
+                ['Expected attendees for new events', newEventExpectedAttendees],
+                ['Rescheduled events', rescheduled]
             ];
-            for (var i = 0; i < tableData.length; i++) {
+            for (var i = 0; i < tableData_1.length; i++) {
                 var row = $('#results tbody tr')[i];
-                $($(row).children('td')[0]).html(tableData[i][0]);
-                $($(row).children('td')[1]).html(tableData[i][1].length || tableData[i][1]);
-                $($(row).children('td')[2]).html('view');
-                $($(row).children('td')[3]).html('view');
+                $($(row).children('td')[0]).html(tableData_1[i][0]);
+                $($(row).children('td')[1]).html(tableData_1[i][1].length || tableData_1[i][1]);
+                $($(row).children('td')[2]).html("<span class='viewAsTable'>Table</span> / <span class='viewAsCsv'>CSV</span>");
             }
+            log('##### Results table populated');
             //Clear and re-inialize on-click listeners to produce updated results.
             //This is ugly AF. This is bad and you should feel bad.
-            $('.viewAs').off('click');
-            var viewAs = $('.viewAs');
-            $(viewAs[0]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(nonCancelledEvents_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[1]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(nonCancelledEvents_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[2]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(cancelledDueToCovid_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[3]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(cancelledDueToCovid_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[4]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(cancelledTotal_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[5]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(cancelledTotal_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[6]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(inPersonToVirtual_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[7]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(inPersonToVirtual_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[8]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(newCovidEvents_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[9]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(newCovidEvents_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[10]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(newEventExpectedAttendees_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[11]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(newEventExpectedAttendees_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[12]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToHtmlTable(rescheduled_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
-            $(viewAs[13]).click(function () {
-                $('#viewAsModalBody').empty();
-                $('#viewAsModalBody').html(jsonToCsv(rescheduled_1));
-                $('#container').addClass('no-select');
-                $('#viewAsModal').removeClass('hidden').addClass('visible');
-            });
+            log('##### Initializing on click listeners');
+            $('.viewAsTable, .viewAsCsv').off('click');
+            var viewAsTable = $('.viewAsTable');
+            var viewAsCsv = $('.viewAsCsv');
+            var _loop_1 = function (i) {
+                $(viewAsTable[i]).click(function () {
+                    console.log('1');
+                    $('#viewAsModalBody').empty();
+                    $('#viewAsModalBody').html(jsonToHtmlTable(tableData_1[i][1]));
+                    $('#container').addClass('no-select');
+                    $('#viewAsModal').removeClass('hidden').addClass('visible');
+                });
+                $(viewAsCsv[i]).click(function () {
+                    console.log(2);
+                    $('#viewAsModalBody').empty();
+                    $('#viewAsModalBody').html(jsonToCsv(tableData_1[i][1]));
+                    $('#container').addClass('no-select');
+                    $('#viewAsModal').removeClass('hidden').addClass('visible');
+                });
+            };
+            for (var i = 0; i < tableData_1.length; i++) {
+                _loop_1(i);
+            }
+            log('##### On click listeners initialized');
+            log('##### SUCCESSFULLY GOT &#128169; DONE');
         }
         catch (e) {
             log(e.toString(), LogLevel.ERROR);
@@ -189,6 +132,18 @@ $(document).ready(function () {
         if ($(event.target).prop('id') === 'viewAsModal') {
             $('#container').removeClass('no-select');
             $('#viewAsModal').removeClass('visible').addClass('hidden');
+        }
+    });
+    //View logs on click listener.
+    $('#viewLogs').click(function () {
+        var logsAreHidden = $('#viewLogs').text().indexOf('View') > -1;
+        if (logsAreHidden) {
+            $('#viewLogs').text('Hide logs');
+            $('#logs').show();
+        }
+        else {
+            $('#viewLogs').text('View logs');
+            $('#logs').hide();
         }
     });
 });
@@ -238,20 +193,19 @@ var parseTsv = function (rawData) {
     log('Mapping raw headers to js friendly headers');
     var headers = rawHeaders.map(function (header) {
         var mappedHeader = headerMap[header.toLowerCase()];
-        log("Mapping raw header << " + header + " >> to << " + mappedHeader + " >>");
+        log("Mapping raw header <span style='font-family: monospace'>" + header + "</span> ---> <span style='font-family: monospace'>" + mappedHeader + "</span>");
         return mappedHeader;
     });
     log("Headers mapped to: " + headers);
     //Loop through the remaining lines and create objects from each row.
     for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
         var line = lines_1[_i];
-        log("Parsing raw line into parsed line: " + line);
         var cells = line.split('\t');
         var row = {};
         for (var i = 0; i < cells.length; i++) {
             row[headers[i]] = cells[i];
         }
-        log("Line parsed as: " + row);
+        log("Line parsed as: " + JSON.stringify(row));
         data.push(row);
     }
     log('Returning parsed data');
@@ -265,14 +219,14 @@ var jsonToCsv = function (data) {
     //Add header row.
     var headerRow = Object.keys(data[0]).join();
     csv.push(headerRow);
-    var _loop_1 = function (obj) {
+    var _loop_2 = function (obj) {
         var str = Object.keys(obj).map(function (key) { return obj[key]; }).join();
         csv.push(str);
     };
     //Add all the objects.
     for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
         var obj = data_1[_i];
-        _loop_1(obj);
+        _loop_2(obj);
     }
     return csv.join('<br />');
 };

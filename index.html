@@ -1,7 +1,7 @@
 <html>
 	<head>
 		<title>
-
+			Event Report Generator
 		</title>
 		<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 		<script src='./build/app.js'></script>
@@ -23,84 +23,77 @@
 			<br />
 			<br />
 			<button id='generateReportButton'>
-				GET 💩 DONE
+				GET &#128169; DONE
 			</button>
 			<br />
 			<br />
-			<hr />
-			<br />
-			<h2>Results</h2>
-			<table id='results'>
-				<thead>
-					<tr>
-						<td>Category</td>
-						<td>Result</td>
-						<td>View as Table</td>
-						<td>View as CSV</td>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable1' class='viewAs'></td>
-						<td id='viewAsCsv1' class='viewAs'></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable2' class='viewAs'></td>
-						<td id='viewAsCsv2' class='viewAs'></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable3' class='viewAs'></td>
-						<td id='viewAsCsv3' class='viewAs'></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable4' class='viewAs'></td>
-						<td id='viewAsCsv4' class='viewAs'></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable5' class='viewAs'></td>
-						<td id='viewAsCsv5' class='viewAs'></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable6' class='viewAs'></td>
-						<td id='viewAsCsv6' class='viewAs'></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td></td>
-						<td id='viewAsTable7' class='viewAs'></td>
-						<td id='viewAsCsv7' class='viewAs'></td>
-					</tr>
-				</tbody>
-			</table>
-			<br />
-			<br />
-			<hr />
-			<br />
-			<h2>Logs</h2>
-			<br />
-			<br />
-			<div id="logs">
+			<div id='runInfo'>
+				<hr />
+				<br />
+				<h2>Results</h2>
+				<table id='results'>
+					<thead>
+						<tr>
+							<td>Category</td>
+							<td>Result</td>
+							<td>View Data</td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+					</tbody>
+				</table>
+				<br />
+				<br />
+				<br />
+				<p id='viewLogs'>View logs</p>
+				<br />
+				<br />
+				<div id='logs'>
+				</div>
+				<br />
+				<br />
+				<br />
+				<br />
+				<br />
+				<br />
+				<br />
+				<br />
 			</div>
-			<br />
-			<br />
-			<br />
-			<br />
-			<br />
-			<br />
-			<br />
-			<br />
 			<div id='viewAsModal' class='modal hidden'>
 				<div class='modal-content'>
 					<div class='modal-header'>
@@ -110,7 +103,7 @@
 					<div id='viewAsModalBody' class='modal-body'>
 					</div>
 					<div class='modal-footer'>
-						Some footer text
+						Use <strong>Ctrl A</strong> to select all text and <strong>Ctrl C</strong> to copy it
 					</div>
 				</div>
 			</div>
@@ -160,6 +153,10 @@
 			background-color: #eeeeee;
 		}
 
+		#runInfo {
+			display: none;
+		}
+
 		.result {
 			cursor: pointer;
 		}
@@ -177,12 +174,14 @@
 			border: 1px solid #aaaaaa;
 		}
 
-		.viewAs:hover {
+		.viewAsTable:hover, .viewAsCsv:hover, #viewLogs:hover  {
+			color: #0066ff;
 			cursor: pointer;
 		}
 
 		#logs {
 			text-align: left;
+			display: none;
 		}
 
 		#logs p {
@@ -241,7 +240,7 @@
 		.modal-content {
 			position: relative;
 			background-color: #fefefe;
-			margin: auto;
+			margin: 10px auto 10px;
 			padding: 0;
 			border: 1px solid #888;
 			width: 80%;
